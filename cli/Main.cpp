@@ -145,7 +145,7 @@ static void bulkLoad(const std::string& path)
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 1:1 matching test...
 //
-static void one(const std::string& path, const std::string& f1, const std::string& f2, const std::string& f3)
+static void one(const std::string& path, const std::string& f1, const std::string& f2, const std::string& f3, Param param)
 {
     Log::test(std::string(LineWidth, '='));
     Log::test("50K iteration 1:1 match", Log::LF);
@@ -179,12 +179,12 @@ static void one(const std::string& path, const std::string& f1, const std::strin
         return;
     }
 
-    const auto test = [](const auto& a, const auto& b) {
+    const auto test = [](const auto& a, const auto& b, Param param_) {
         MatchSimilarity match;
         uint8_t s {};
 
         const auto start = std::chrono::steady_clock::now();
-        match.compute(s, a.fingerprints()[0], b.fingerprints()[0]);
+        match.compute(s, a.fingerprints()[0], b.fingerprints()[0], param_);
         const auto finish = std::chrono::steady_clock::now();
         const auto us = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
 
@@ -192,9 +192,9 @@ static void one(const std::string& path, const std::string& f1, const std::strin
     };
 
     Log::test(Log::LF, "Matching...");
-    test(t1, t2);
+    test(t1, t2, param);
     Log::test("");
-    test(t1, t3);
+    test(t1, t3, param);
     Log::test(std::string(LineWidth, '='), Log::LF);
 }
 
@@ -202,7 +202,7 @@ static void one(const std::string& path, const std::string& f1, const std::strin
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 1:N matching test...
 //
-static void oneMany(const std::string& path, const std::string& f1, const int loadFactor)
+static void oneMany(const std::string& path, const std::string& f1, const int loadFactor, Param param)
 {
     using TemplateType = TemplateISO19794_2_2005<std::string, Fingerprint>;
     MatchMany<TemplateType> match;
@@ -231,12 +231,12 @@ static void oneMany(const std::string& path, const std::string& f1, const int lo
 
     Log::test(Log::LF, "Matching 1:", candidates.size());
 
-    for (auto i = 1; i <= 3; ++i) {
+    for (auto i = 1; i <= 1; ++i) {
         Log::test(Log::LF, "Pass ", i, "...");
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
         const auto start = std::chrono::steady_clock::now();
-        const auto result = match.oneMany(probe, candidates);
+        const auto result = match.oneMany(probe, candidates, param);
         const auto finish = std::chrono::steady_clock::now();
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
 
@@ -255,7 +255,7 @@ static void oneMany(const std::string& path, const std::string& f1, const int lo
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // N:N matching test. Matches every template against every other template; hashing this output is a quick way to check optimisations haven't affected efficacy...
 //
-static void manyMany(const std::string& path, const int loadFactor)
+static void manyMany(const std::string& path, const int loadFactor, Param param)
 {
     using TemplateType = TemplateISO19794_2_2005<std::string, Fingerprint>;
     MatchMany<TemplateType> match;
@@ -280,7 +280,7 @@ static void manyMany(const std::string& path, const int loadFactor)
     Log::test(Log::LF, "Matching ", scores.capacity(), " permutations...");
 
     const auto start = std::chrono::steady_clock::now();
-    match.manyMany(scores, templates);
+    match.manyMany(scores, templates, param);
     const auto finish = std::chrono::steady_clock::now();
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
     Log::test("Completed in ", ms.count(), "ms (", ms.count() ? static_cast<float>(scores.capacity()) / ms.count() * 1000 : 0, " fp/s)");
@@ -325,7 +325,7 @@ static void manyMany(const std::string& path, const int loadFactor)
 #if 0
 
 //NJH-TODO
-static void bench(const std::string& path, const std::string& f1, const int loadFactor)
+static void bench(const std::string& path, const std::string& f1, const int loadFactor, Param param)
 {
     using TemplateType = TemplateISO19794_2_2005<uint32_t, Fingerprint>;
     MatchMany<TemplateType> match;
@@ -354,7 +354,7 @@ static void bench(const std::string& path, const std::string& f1, const int load
 
     Log::test(Log::LF, "Matching 1:", candidates.size());
 
-    const auto result = match.oneMany(probe, candidates);
+    const auto result = match.oneMany(probe, candidates, param);
 
     if (result.second) {
         Log::test(
@@ -368,7 +368,7 @@ static void bench(const std::string& path, const std::string& f1, const int load
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-static void render(const std::string& path, const std::string& f1, const std::string& f2)
+static void render(const std::string& path, const std::string& f1, const std::string& f2, Param param)
 {
     Log::test(std::string(LineWidth, '='));
     Log::test("Minutiae + pairing rendering", Log::LF);
@@ -395,7 +395,7 @@ static void render(const std::string& path, const std::string& f1, const std::st
         return;
     }
 
-    const auto test = [](const auto& a, const auto& b) {
+    const auto test = [](const auto& a, const auto& b, Param param_) {
         const auto write = [](const auto& t, const std::string& svg) {
             const auto fn = StringUtil::format(R"(%s.svg)", std::to_string(t.id()).c_str());
             std::ofstream f(fn, std::ofstream::binary);
@@ -407,7 +407,7 @@ static void render(const std::string& path, const std::string& f1, const std::st
             Log::test("Written ", fn);
         };
         std::string svg1, svg2;
-        if (!Render::all(svg1, svg2, a.fingerprints()[0], b.fingerprints()[0])) {
+        if (!Render::all(svg1, svg2, a.fingerprints()[0], b.fingerprints()[0], param_)) {
             return;
         }
         write(a, svg1);
@@ -415,7 +415,7 @@ static void render(const std::string& path, const std::string& f1, const std::st
     };
 
     Log::test(Log::LF, "Rendering...");
-    test(t1, t2);
+    test(t1, t2, param);
     Log::test(std::string(LineWidth, '='), Log::LF);
 }
 
@@ -433,20 +433,39 @@ int main(const int argc, const char** argv)
 
     const auto hasOption = [](const char** begin, const char** end, const std::string& option) { return std::find(begin, end, option) != end; };
 
-    Log::init();
-    Log::test("OpenAFIS: an efficient 1:N fingerprint matching library (", Param::EnableSIMD ? InstructionSet : "SCALAR", ")");
-    Log::test("Build options:");
-    Log::test("    MaximumLocalDistance: ", static_cast<int>(Param::MaximumLocalDistance));
-    Log::test("    MaximumGlobalDistance: ", static_cast<int>(Param::MaximumGlobalDistance));
-    Log::test("    MinimumMinutiae: ", static_cast<int>(Param::MinimumMinutiae));
-    Log::test("    MaximumConcurrency: ", static_cast<int>(Param::MaximumConcurrency));
-    Log::test("    MaximumRotations: ", static_cast<int>(Param::MaximumRotations), Log::LF);
-
     const auto f1 = param(argv, argv + argc, "--f1");
     const auto f2 = param(argv, argv + argc, "--f2");
     const auto f3 = param(argv, argv + argc, "--f3");
     const auto path = param(argv, argv + argc, "--path");
     const auto loadFactor = std::atoi(param(argv, argv + argc, "--load-factor").c_str());
+
+    Param param;
+
+    if (hasOption(argv, argv + argc, "--max-local")) {
+        param.MaximumLocalDistance = std::atoi(param(argv, argv + argc, "--max-local").c_str());
+    }
+    if (hasOption(argv, argv + argc, "--max-global")) {
+        param.MaximumGlobalDistance = std::atoi(param(argv, argv + argc, "--max-global").c_str());
+    }
+    if (hasOption(argv, argv + argc, "--max-minu")) {
+        param.MinimumMinutiae = static_cast<uint>(std::atoi(param(argv, argv + argc, "--max-minu").c_str()));
+    }
+    if (hasOption(argv, argv + argc, "--max-angle")) {
+        param.MaximumAngleDifference = std::atof(param(argv, argv + argc, "--max-angle").c_str());
+    }
+    if (hasOption(argv, argv + argc, "--max-dir")) {
+        param.MaximumDirectionDifference = std::atof(param(argv, argv + argc, "--max-dir").c_str());
+    }
+
+    Log::init();
+    Log::test("OpenAFIS: an efficient 1:N fingerprint matching library (", Param::EnableSIMD ? InstructionSet : "SCALAR", ")");
+    Log::test("Build options:");
+    Log::test("    MaximumLocalDistance: ", static_cast<int>(param.MaximumLocalDistance));
+    Log::test("    MaximumGlobalDistance: ", static_cast<int>(param.MaximumGlobalDistance));
+    Log::test("    MinimumMinutiae: ", static_cast<int>(param.MinimumMinutiae));
+    Log::test("    MaximumAngleDifference: ", static_cast<int>(param.MaximumAngleDifference));
+    Log::test("    MaximumDirectionDifference: ", static_cast<int>(param.MaximumDirectionDifference));
+    Log::test("    MaximumRotations: ", static_cast<int>(param.MaximumRotations), Log::LF);
 
     bool command {};
     if (hasOption(argv, argv + argc, "bulk-load")) {
@@ -454,19 +473,19 @@ int main(const int argc, const char** argv)
         command |= true;
     }
     if (hasOption(argv, argv + argc, "one")) {
-        one(path, f1, f2, f3);
+        one(path, f1, f2, f3, param);
         command |= true;
     }
     if (hasOption(argv, argv + argc, "one-many")) {
-        oneMany(path, f1, std::max(1, loadFactor));
+        oneMany(path, f1, std::max(1, loadFactor), param);
         command |= true;
     }
     if (hasOption(argv, argv + argc, "many-many")) {
-        manyMany(path, std::max(1, loadFactor));
+        manyMany(path, std::max(1, loadFactor), param);
         command |= true;
     }
     if (hasOption(argv, argv + argc, "render")) {
-        render(path, f1, f2);
+        render(path, f1, f2, param);
         command |= true;
     }
     if (hasOption(argv, argv + argc, "--help") || !command) {

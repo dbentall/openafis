@@ -4,6 +4,7 @@
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include "Template.h"
+#include "Param.h"
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +23,7 @@ public:
         m_pairs.reserve(100);
     }
 
-    void compute(ResultType& result, const FingerprintType& probe, const FingerprintType& candidate) const;
+    void compute(ResultType& result, const FingerprintType& probe, const FingerprintType& candidate, Param param) const;
 
 private:
     using Dupes = std::unordered_set<Field::MinutiaKeyType>;

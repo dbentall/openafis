@@ -2,7 +2,6 @@
 #include "Match.h"
 #include "FastMath.h"
 #include "Log.h"
-#include "Param.h"
 
 #include <algorithm>
 
@@ -15,7 +14,7 @@ namespace OpenAFIS
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // https://doi.org/10.3390/s120303418
 //
-template <class R, class F, class P> void Match<R, F, P>::compute(R& result, const F& probe, const F& candidate) const
+template <class R, class F, class P> void Match<R, F, P>::compute(R& result, const F& probe, const F& candidate, Param param) const
 {
     const auto& probeT = probe.triplets();
     const auto& candidateT = candidate.triplets();
@@ -23,19 +22,19 @@ template <class R, class F, class P> void Match<R, F, P>::compute(R& result, con
 
     // Local matching 5.1.1-2...
     for (const auto& p : probeT) {
-        auto it = std::lower_bound(candidateT.begin(), candidateT.end(), static_cast<Field::MinutiaDistanceType>(p.maxDistance() - Param::MaximumLocalDistance));
+        auto it = std::lower_bound(candidateT.begin(), candidateT.end(), static_cast<Field::MinutiaDistanceType>(p.maxDistance() - param.MaximumLocalDistance));
         if (it == candidateT.end()) {
             continue;
         }
-        const auto end = std::upper_bound(it, candidateT.end(), static_cast<Field::MinutiaDistanceType>(p.maxDistance() + Param::MaximumLocalDistance));
+        const auto end = std::upper_bound(it, candidateT.end(), static_cast<Field::MinutiaDistanceType>(p.maxDistance() + param.MaximumLocalDistance));
 
         for (; it < end; ++it) {
-            if (!it->skipPair(p)) {
-                it->emplacePair(m_tripletPairs, p);
+            if (!it->skipPair(p, param.MaximumLocalDistance)) {
+                it->emplacePair(m_tripletPairs, p, param);
             }
         }
     }
-    if (m_tripletPairs.size() < Param::MinimumMinutiae) {
+    if (m_tripletPairs.size() < param.MinimumMinutiae) {
         return;
     }
 
@@ -64,13 +63,13 @@ template <class R, class F, class P> void Match<R, F, P>::compute(R& result, con
     }
 
     // Global matching 5.2...
-    auto maxMatched = 0;
+    uint maxMatched = 0;
     for (const auto& p1 : m_pairs) {
         const auto theta = static_cast<Field::AngleType>(p1.candidate()->angle() - p1.probe()->angle());
         const auto cosTheta = FastMath::cos(theta);
         const auto sinTheta = FastMath::sin(theta);
 
-        auto matched = 1;
+        uint matched = 1;
         auto min = m_pairs.size() - 1;
 
         for (const auto& p2 : m_pairs) {
@@ -85,7 +84,7 @@ template <class R, class F, class P> void Match<R, F, P>::compute(R& result, con
                 const auto a = x - p2.candidate()->x();
                 const auto b = y - p2.candidate()->y();
                 const auto c = a * a + b * b;
-                return c <= Param::MaximumGlobalDistance * Param::MaximumGlobalDistance;
+                return c <= param.MaximumGlobalDistance * param.MaximumGlobalDistance;
             }();
             if (!lengths) {
                 continue;
@@ -110,7 +109,7 @@ template <class R, class F, class P> void Match<R, F, P>::compute(R& result, con
                         return static_cast<Field::AngleSize>(p2.probe()->angle() + theta);
                     }
                 };
-                return FastMath::minimumAngle(a(), p2.candidate()->angle()) <= Param::maximumDirectionDifference();
+                return FastMath::minimumAngle(a(), p2.candidate()->angle()) <= param.maximumDirectionDifference();
             }();
             if (!directions) {
                 continue;
@@ -119,13 +118,13 @@ template <class R, class F, class P> void Match<R, F, P>::compute(R& result, con
             const auto anglesBeta = [&]() {
                 const auto p = FastMath::rotateAngle(p1.probe()->angle(), p2.probe()->angle());
                 const auto c = FastMath::rotateAngle(p1.candidate()->angle(), p2.candidate()->angle());
-                return FastMath::minimumAngle(p, c) <= Param::maximumAngleDifference();
+                return FastMath::minimumAngle(p, c) <= param.maximumAngleDifference();
             }();
             if (!anglesBeta) {
                 continue;
             }
             matched++;
-            if (matched + --min < Param::MinimumMinutiae) {
+            if (matched + --min < param.MinimumMinutiae) {
                 break;
             }
 
@@ -137,7 +136,7 @@ template <class R, class F, class P> void Match<R, F, P>::compute(R& result, con
         maxMatched = std::max(maxMatched, matched);
     }
     if constexpr (std::is_same_v<R, uint8_t>) {
-        if (maxMatched > Param::MinimumMinutiae) {
+        if (maxMatched > param.MinimumMinutiae) {
             result = static_cast<uint8_t>((maxMatched * maxMatched * 100) / (probe.minutiaeCount() * candidate.minutiaeCount()));
         }
     }

@@ -21,8 +21,8 @@ class TripletScalar : public Triplet
 public:
     explicit TripletScalar(const Minutiae& minutiae);
 
-    [[nodiscard]] bool skipPair(const TripletScalar& probe) const;
-    void emplacePair(Pair::Pairs& pairs, const TripletScalar& probe) const;
+    [[nodiscard]] bool skipPair(const TripletScalar& probe, Field::MinutiaDistanceType max_local_distance) const;
+    void emplacePair(Pair::Pairs& pairs, const TripletScalar& probe, Param param) const;
     [[nodiscard]] inline Field::MinutiaDistanceType maxDistance() const { return static_cast<Field::MinutiaDistanceType>(m_distances); }
     [[nodiscard]] size_t bytes() const { return sizeof(*this); };
 

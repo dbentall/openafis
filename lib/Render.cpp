@@ -21,11 +21,11 @@ bool Render::minutiae(std::string& svg, const FingerprintRenderable& fp)
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-bool Render::pairs(std::string& svg1, std::string& svg2, const FingerprintRenderable& fp1, const FingerprintRenderable& fp2)
+bool Render::pairs(std::string& svg1, std::string& svg2, const FingerprintRenderable& fp1, const FingerprintRenderable& fp2, Param param)
 {
     open(svg1, fp1.dimensions());
     open(svg2, fp2.dimensions());
-    addPairs(svg1, svg2, fp1, fp2);
+    addPairs(svg1, svg2, fp1, fp2, param);
     close(svg1);
     close(svg2);
     return true;
@@ -33,13 +33,13 @@ bool Render::pairs(std::string& svg1, std::string& svg2, const FingerprintRender
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-bool Render::all(std::string& svg1, std::string& svg2, const FingerprintRenderable& fp1, const FingerprintRenderable& fp2)
+bool Render::all(std::string& svg1, std::string& svg2, const FingerprintRenderable& fp1, const FingerprintRenderable& fp2, Param param)
 {
     open(svg1, fp1.dimensions());
     open(svg2, fp2.dimensions());
     addMinutiae(svg1, fp1);
     addMinutiae(svg2, fp2);
-    addPairs(svg1, svg2, fp1, fp2);
+    addPairs(svg1, svg2, fp1, fp2, param);
     close(svg1);
     close(svg2);
     return true;
@@ -69,7 +69,7 @@ void Render::addMinutiae(std::string& svg, const FingerprintRenderable& fp)
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void Render::addPairs(std::string& svg1, std::string& svg2, const FingerprintRenderable& fp1, const FingerprintRenderable& fp2)
+void Render::addPairs(std::string& svg1, std::string& svg2, const FingerprintRenderable& fp1, const FingerprintRenderable& fp2, Param param)
 {
     if (fp1.dimensions() != fp2.dimensions()) {
         Log::error("mismatched dimensions not supported");
@@ -80,7 +80,7 @@ void Render::addPairs(std::string& svg1, std::string& svg2, const FingerprintRen
 
     MinutiaPoint::PairRenderable::Set pairs;
     const MatchRenderable match;
-    match.compute(pairs, fp1, fp2);
+    match.compute(pairs, fp1, fp2, param);
 
     for (const auto* p : pairs) {
         const auto x1 = std::lround(static_cast<float>(p->probe()->x()) * scaleX);

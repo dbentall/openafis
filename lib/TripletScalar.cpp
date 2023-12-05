@@ -32,7 +32,7 @@ TripletScalar::TripletScalar(const Minutiae& minutiae)
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Theorems 1, 2 & 3...
 //
-bool TripletScalar::skipPair(const TripletScalar& probe) const
+bool TripletScalar::skipPair(const TripletScalar& probe, Field::MinutiaDistanceType max_local_distance) const
 {
     constexpr auto SkipMethod = 2;
 
@@ -55,13 +55,13 @@ bool TripletScalar::skipPair(const TripletScalar& probe) const
 
         auto d = ((x1 ^ t0) & ~t1) + ((y2 ^ t0) & ~t2);
 
-        if (static_cast<int8_t>(d) >= Param::MaximumLocalDistance) {
+        if (static_cast<int8_t>(d) >= max_local_distance) {
             return true;
         }
-        if (static_cast<int8_t>(d >> 8) >= Param::MaximumLocalDistance) {
+        if (static_cast<int8_t>(d >> 8) >= max_local_distance) {
             return true;
         }
-        if (static_cast<int8_t>(d >> 16) >= Param::MaximumLocalDistance) {
+        if (static_cast<int8_t>(d >> 16) >= max_local_distance) {
             return true;
         }
         return false;
@@ -72,15 +72,15 @@ bool TripletScalar::skipPair(const TripletScalar& probe) const
         constexpr uint32_t SignMask = 0x80808080u;
         auto d = ((m_distances | SignMask) - probe.m_distances) ^ ((m_distances ^ SignMask) & SignMask);
 
-        if (static_cast<int8_t>(d) >= Param::MaximumLocalDistance || static_cast<int8_t>(d) <= -Param::MaximumLocalDistance) {
+        if (static_cast<int8_t>(d) >= max_local_distance || static_cast<int8_t>(d) <= -max_local_distance) {
             return true;
         }
         d >>= 8;
-        if (static_cast<int8_t>(d) >= Param::MaximumLocalDistance || static_cast<int8_t>(d) <= -Param::MaximumLocalDistance) {
+        if (static_cast<int8_t>(d) >= max_local_distance || static_cast<int8_t>(d) <= -max_local_distance) {
             return true;
         }
         d >>= 8;
-        if (static_cast<int8_t>(d) >= Param::MaximumLocalDistance || static_cast<int8_t>(d) <= -Param::MaximumLocalDistance) {
+        if (static_cast<int8_t>(d) >= max_local_distance || static_cast<int8_t>(d) <= -max_local_distance) {
             return true;
         }
         return false;
@@ -91,13 +91,13 @@ bool TripletScalar::skipPair(const TripletScalar& probe) const
         constexpr uint32_t MSBON = 0x80808080u;
         auto d = ((m_distances | MSBON) - probe.m_distances) ^ ((m_distances ^ MSBON) & MSBON);
 
-        if (std::abs(static_cast<Field::MinutiaDistanceType>(d)) >= Param::MaximumLocalDistance) {
+        if (std::abs(static_cast<Field::MinutiaDistanceType>(d)) >= max_local_distance) {
             return true;
         }
-        if (std::abs(static_cast<Field::MinutiaDistanceType>(d >> 8)) >= Param::MaximumLocalDistance) {
+        if (std::abs(static_cast<Field::MinutiaDistanceType>(d >> 8)) >= max_local_distance) {
             return true;
         }
-        if (std::abs(static_cast<Field::MinutiaDistanceType>(d >> 16)) >= Param::MaximumLocalDistance) {
+        if (std::abs(static_cast<Field::MinutiaDistanceType>(d >> 16)) >= max_local_distance) {
             return true;
         }
         return false;
@@ -107,17 +107,17 @@ bool TripletScalar::skipPair(const TripletScalar& probe) const
         // Default (abs(x-y) b0, b1 and b2)...
         auto cd = m_distances;
         auto pd = probe.m_distances;
-        if (FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd)) >= Param::MaximumLocalDistance) {
+        if (FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd)) >= max_local_distance) {
             return true;
         }
         cd >>= 8;
         pd >>= 8;
-        if (FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd)) >= Param::MaximumLocalDistance) {
+        if (FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd)) >= max_local_distance) {
             return true;
         }
         cd >>= 8;
         pd >>= 8;
-        if (FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd)) >= Param::MaximumLocalDistance) {
+        if (FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd)) >= max_local_distance) {
             return true;
         }
         return false;
@@ -129,16 +129,16 @@ bool TripletScalar::skipPair(const TripletScalar& probe) const
 // Compute similarity per 5.1.1-3
 // Note: equation return values are inverted and scaled for integer math...
 //
-void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe) const
+void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe, Param param) const
 {
     using Shift = std::array<uint8_t, 3>;
     static constexpr std::array<Shift, 3> Shifting = { { { 0, 1, 2 }, { 1, 2, 0 }, { 2, 0, 1 } } }; // rotate triplets when comparing
     static constexpr auto BestS = Pair::SimilarityMultiplier * Pair::SimilarityMultiplier * Pair::SimilarityMultiplier;
     auto bestS = BestS;
-    auto rotations = Param::MaximumRotations;
+    auto rotations = param.MaximumRotations;
 
     for (const auto& shift : Shifting) {
-        if constexpr (Param::MaximumRotations != 3) {
+        if (param.MaximumRotations != 3) {
             if (!rotations--) {
                 break;
             }
@@ -147,7 +147,7 @@ void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe) 
         // Equation 7 (3 iterations)...
         const auto directions = [&]() {
             for (decltype(shift.size()) i = 0; i < shift.size(); ++i) {
-                if (FastMath::minimumAngle(m_minutiae[i].angle(), probe.minutiae()[shift[i]].angle()) >= Param::maximumDirectionDifference()) {
+                if (FastMath::minimumAngle(m_minutiae[i].angle(), probe.minutiae()[shift[i]].angle()) >= param.maximumDirectionDifference()) {
                     return false;
                 }
             }
@@ -167,13 +167,13 @@ void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe) 
                 // NJH-TODO const auto d = FastMath::diff(m_minutiae[i].distance(), probe.minutiae()[shift[i]].distance());
                 const auto d = FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd >> (shift[i] * 8)));
                 // NJH-TODO const auto d = FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), probe.minutiae()[shift[i]].distance());
-                if (d >= Param::MaximumLocalDistance) {
+                if (d >= param.MaximumLocalDistance) {
                     return Pair::SimilarityMultiplier;
                 }
                 cd >>= 8;
                 max = std::max(max, static_cast<int>(d));
             }
-            return (max * Pair::SimilarityMultiplier) / Param::MaximumLocalDistance;
+            return (max * Pair::SimilarityMultiplier) / param.MaximumLocalDistance;
         }();
         if (lengths == Pair::SimilarityMultiplier) {
             continue;
@@ -189,12 +189,12 @@ void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe) 
                 const auto c = FastMath::rotateAngle(m_minutiae[i].angle(), m_minutiae[j].angle());
                 const auto p = FastMath::rotateAngle(probe.minutiae()[shift[i]].angle(), probe.minutiae()[shift[j]].angle());
                 const auto d = FastMath::minimumAngle(c, p);
-                if (d >= Param::maximumAngleDifference()) {
+                if (d >= param.maximumAngleDifference()) {
                     return Pair::SimilarityMultiplier;
                 }
                 max = std::max(max, d);
             }
-            return (max * Pair::SimilarityMultiplier) / Param::maximumAngleDifference();
+            return (max * Pair::SimilarityMultiplier) / param.maximumAngleDifference();
         }();
         if (anglesBeta == Pair::SimilarityMultiplier) {
             continue;
@@ -218,13 +218,13 @@ void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe) 
                     const auto od = FastMath::rotateAngle(probe.minutiae()[shift[i]].angle(), FastMath::atan2(oy, ox));
 
                     const auto ad = FastMath::minimumAngle(d, od);
-                    if (ad >= Param::maximumAngleDifference()) {
+                    if (ad >= param.maximumAngleDifference()) {
                         return Pair::SimilarityMultiplier;
                     }
                     max = std::max(max, ad);
                 }
             }
-            return (max * Pair::SimilarityMultiplier) / Param::maximumAngleDifference();
+            return (max * Pair::SimilarityMultiplier) / param.maximumAngleDifference();
         }();
         if (anglesAlpha == Pair::SimilarityMultiplier) {
             continue;

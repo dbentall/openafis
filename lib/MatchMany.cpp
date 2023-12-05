@@ -21,7 +21,7 @@ MatchMany<T>::MatchMany()
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-template <class T> typename MatchMany<T>::OneManyResult MatchMany<T>::oneMany(const T& probe, const Templates& candidates) const
+template <class T> typename MatchMany<T>::OneManyResult MatchMany<T>::oneMany(const T& probe, const Templates& candidates, Param param) const
 {
     if (candidates.empty()) {
         return std::make_pair(uint8_t {}, nullptr);
@@ -35,7 +35,7 @@ template <class T> typename MatchMany<T>::OneManyResult MatchMany<T>::oneMany(co
 
         for (const auto& t : candidates) {
             uint8_t similarity {};
-            match.compute(similarity, probeT, t.fingerprints()[0]);
+            match.compute(similarity, probeT, t.fingerprints()[0], param);
             if (similarity > maxSimilarity) {
                 maxSimilarity = similarity;
                 maxCandidate = &t;
@@ -57,7 +57,7 @@ template <class T> typename MatchMany<T>::OneManyResult MatchMany<T>::oneMany(co
 
             for (auto it = fromIt; it < endIt; ++it) {
                 uint8_t similarity {};
-                match.compute(similarity, probeT, it->fingerprints()[0]);
+                match.compute(similarity, probeT, it->fingerprints()[0], param);
                 if (similarity > maxSimilarity) {
                     maxSimilarity = similarity;
                     maxCandidate = &(*it);
@@ -84,7 +84,7 @@ template <class T> typename MatchMany<T>::OneManyResult MatchMany<T>::oneMany(co
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-template <class T> void MatchMany<T>::manyMany(std::vector<uint8_t>& scores, const Templates& templates) const
+template <class T> void MatchMany<T>::manyMany(std::vector<uint8_t>& scores, const Templates& templates, Param param) const
 {
     if (scores.size() != templates.size() * templates.size()) {
         return;
@@ -96,7 +96,7 @@ template <class T> void MatchMany<T>::manyMany(std::vector<uint8_t>& scores, con
         for (const auto& t1 : templates) {
             auto& t1t = t1.fingerprints()[0];
             for (const auto& t2 : templates) {
-                match.compute(*scoresPtr++, t1t, t2.fingerprints()[0]);
+                match.compute(*scoresPtr++, t1t, t2.fingerprints()[0], param);
             }
         }
         return;
@@ -109,7 +109,7 @@ template <class T> void MatchMany<T>::manyMany(std::vector<uint8_t>& scores, con
             MatchSimilarity match;
             auto* scoresPtr = &scores[i];
             for (const auto& t2 : templates) {
-                match.compute(*scoresPtr++, t1t, t2.fingerprints()[0]);
+                match.compute(*scoresPtr++, t1t, t2.fingerprints()[0], param);
             }
         }));
         i += templates.size();

@@ -4,6 +4,7 @@
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #include "ThreadPool.h"
+#include "Param.h"
 
 #include <vector>
 
@@ -20,8 +21,8 @@ public:
 
     MatchMany();
 
-    OneManyResult oneMany(const TemplateType& probe, const Templates& candidates) const;
-    void manyMany(std::vector<uint8_t>& scores, const Templates& templates) const;
+    OneManyResult oneMany(const TemplateType& probe, const Templates& candidates, Param param) const;
+    void manyMany(std::vector<uint8_t>& scores, const Templates& templates, Param param) const;
 
     [[nodiscard]] size_t concurrency() const { return m_pool.size(); }
 
