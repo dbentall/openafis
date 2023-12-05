@@ -4,7 +4,7 @@ from libc.stdint cimport uint8_t, uint32_t
 
 from OpenAFIS cimport TemplateISO19794_2_2005, Fingerprint, MatchSimilarity, Param
 
-# Create a Python class that wraps the C++ class
+
 cdef class PyTemplateISO19794_2_2005:
     cdef TemplateISO19794_2_2005[uint32_t, Fingerprint]* c_instance
 
@@ -14,11 +14,12 @@ cdef class PyTemplateISO19794_2_2005:
     def __dealloc__(self):
         del self.c_instance
 
-    def load(self, path: str):
+    def from_file(self, path: str):
         return self.c_instance.load(path.encode())
 
-    # cdef fingerprint(self):
-    #     return self.c_instance.fingerprints().at(0)
+    def from_bytes(self, data: bytes):
+        return self.c_instance.load(data, len(data))
+
 
 cdef class PyMatchSimilarity:
     cdef MatchSimilarity* c_instance

@@ -90,6 +90,7 @@ cdef extern from "TemplateISO19794_2_2005.h" namespace "OpenAFIS":
     cdef cppclass TemplateISO19794_2_2005[IdType, FingerprintType]:
         TemplateISO19794_2_2005(const IdType id) except +
         bool load(const string&)
+        bool load(const uint8_t* data, const size_t length)
         vector[FingerprintType] fingerprints()
 
 cdef extern from "ThreadPool.h" namespace "OpenAFIS":
