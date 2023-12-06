@@ -46,6 +46,17 @@ clang-cl 11 (Windows x64) is also used during development.
 
 ## Getting started
 
+#### Python wrapper
+
+```sh
+git clone https://github.com/neilharan/openafis.git
+cd openafis
+poetry install
+poetry run python examples/one_many.py data/valid/fvc2004/DB1_B/101_1.iso data/valid/fvc2004/DB1_B/
+```
+
+The following steps are not required to use the python wrapper.
+
 #### Install dependencies
 
 ```sh

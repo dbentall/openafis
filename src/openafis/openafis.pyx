@@ -6,6 +6,10 @@ from OpenAFIS cimport TemplateISO19794_2_2005, Fingerprint, MatchSimilarity, Par
 
 
 cdef class PyTemplateISO19794_2_2005:
+    """Python wrapper for OpenAFIS TemplateISO19794_2_2005 class. This represents one 
+    fingerprint template. It can be loaded from an ISO19794_2_2005-compliant file or
+    from a byte array.
+    """
     cdef TemplateISO19794_2_2005[uint32_t, Fingerprint]* c_instance
 
     def __cinit__(self, id: int):
@@ -28,6 +32,9 @@ cdef class PyTemplateISO19794_2_2005:
 
 
 cdef class PyMatchSimilarity:
+    """Python wrapper for OpenAFIS MatchSimilarity class. This class is used to compute
+    the similarity between two fingerprint templates.
+    """
     cdef MatchSimilarity* c_instance
     cdef Param param
 
