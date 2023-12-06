@@ -6,6 +6,7 @@ authors = ["Daniel Bentall <daniel.bentall@plantandfood.co.nz>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = "openafis", from = "src"}]
+include = ["src/openafis/*.so"]
 
 [tool.poetry.build]
 generate-setup-file = false
