@@ -15,10 +15,10 @@ class Field
 public:
     // Coordinates and distances are always scaled to 8-bits so uint8_t is sufficient, int is likely to be more efficient though.
     // When memory constrained specify a smaller type here, otehrwise leave default...
-    using MinutiaCoordSize = uint8_t;
-    using MinutiaCoordType = int16_t;
+    using MinutiaCoordSize = uint16_t;
+    using MinutiaCoordType = int32_t;
 
-    using MinutiaDistanceType = int8_t;
+    using MinutiaDistanceType = int16_t;
 
     // Angles are expressed in radians, but are mapped over [0,255] when AngleType is an integer.
     // Options are int16_t or float. Double is not supported.
@@ -28,7 +28,7 @@ public:
 
     // We only use the 16 LSB's in the key type. While MinutiaCoordType is uint8_t this could be uint16_t.
     // It is used only to identify duplicate triplets...
-    using MinutiaKeyType = int16_t;
+    using MinutiaKeyType = int32_t;
 };
 }
 

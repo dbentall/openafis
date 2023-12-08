@@ -45,11 +45,19 @@ private:
 
         [[nodiscard]] constexpr Field::MinutiaDistanceType get(const unsigned int x) const
         {
-            assert(x < Max);
+            if (x <= Max)
+            {
+                return (*m_values)[x];
+            }
+            else
+            {
+                return std::sqrt(x);
+            }
             return (*m_values)[x];
         }
 
-        static constexpr auto Max = (std::numeric_limits<Field::MinutiaCoordSize>::max() + 1) * (std::numeric_limits<Field::MinutiaCoordSize>::max() + 1) * 2;
+        // Constrain to 8-bits to conserve BSS static memory
+        static constexpr auto Max = ((std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8) + 1) * ((std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8) + 1) * 2;
 
     private:
         using Values = std::array<Field::MinutiaDistanceType, Max>;
@@ -63,14 +71,19 @@ private:
 
         [[nodiscard]] constexpr Field::AngleType get(const Field::MinutiaCoordType x, const Field::MinutiaCoordType y) const
         {
-            assert(x > Min && x < Max);
-            assert(y > Min && y < Max);
-            return (*m_values)[x - Min][y - Min];
+            if (x > Min && x < Max && y > Min && y < Max)
+            {
+                return (*m_values)[x - Min][y - Min];
+            }
+            else
+            {
+                return std::atan2(x - Min, y - Min);
+            }
         }
 
-        static constexpr Field::AngleType Min = -std::numeric_limits<Field::MinutiaCoordSize>::max();
-        static constexpr Field::AngleType Max = std::numeric_limits<Field::MinutiaCoordSize>::max();
-
+        // Constrain to 8-bits to conserve BSS static memory
+        static constexpr Field::AngleType Min = -std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8;
+        static constexpr Field::AngleType Max = std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8;
     private:
         using Values = std::array<std::array<Field::AngleType, Max - Min>, Max - Min>;
         const Values* m_values;
