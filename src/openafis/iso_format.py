@@ -4,24 +4,24 @@ from pydantic import BaseModel
 
 
 class Minutia(BaseModel):
-    type: int
+    type: int = 1
     x: int
     y: int
-    angle: int
-    quality: int
+    angle: int = 0
+    quality: int = 0
 
 
 class Fingerprint(BaseModel):
-    position: int
-    quality: int
+    position: int = 0
+    quality: int = 0
     minutiae: list[Minutia]
 
 
 class ISOFormat(BaseModel):
     width: int
     height: int
-    resolution_x: int
-    resolution_y: int
+    resolution_x: int = 0
+    resolution_y: int = 0
     fingerprints: list[Fingerprint]
 
     @classmethod
@@ -120,39 +120,3 @@ class ISOFormat(BaseModel):
         # Footer
         out += b"\x00\x00"
         return out
-
-
-if __name__ == "__main__":
-    import sys
-    import json
-
-    
-
-    # sys.argv = [
-    #     "pyso.py",
-    #     "/powerplant/workspace/hrrdxb/Scratch/openafis/data/valid/fvc2004/DB1_B/101_1.iso",
-    #     "test.iso",
-    # ]
-
-    # if len(sys.argv) < 2:
-    #     print("Reads ISO file and writes to output file")
-    #     print("Usage: python pyso.py <path to ISO 19794-2 file> [<output file>]")
-    #     sys.exit(1)
-
-    # path = sys.argv[1]
-    # fingerprints = ISOFormat.from_iso_file(path)
-
-    # if len(sys.argv) > 2:
-    #     out_path = sys.argv[2]
-    #     fingerprints.to_iso_file(out_path)
-    #     fingerprints2 = ISOFormat.from_iso_file(out_path)
-    #     if fingerprints == fingerprints2:
-    #         print("ISO files are equal")
-    #     else:
-    #         print("ISO files are not equal")
-    #         print("Original:")
-    #         print(json.dumps(fingerprints.dict(), indent=4))
-    #         print("New:")
-    #         print(json.dumps(fingerprints2.dict(), indent=4))
-    # else:
-    #     print(json.dumps(fingerprints.dict(), indent=4))

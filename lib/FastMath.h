@@ -8,6 +8,7 @@
 #include <array>
 #include <cassert>
 #include <limits>
+#include <cmath>
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -45,13 +46,13 @@ private:
 
         [[nodiscard]] constexpr Field::MinutiaDistanceType get(const unsigned int x) const
         {
-            if (x <= Max)
+            if (x < Max)
             {
                 return (*m_values)[x];
             }
             else
             {
-                return std::sqrt(x);
+                return static_cast<Field::MinutiaDistanceType>(std::lround(std::sqrt(x)));
             }
             return (*m_values)[x];
         }
@@ -77,7 +78,8 @@ private:
             }
             else
             {
-                return std::atan2(x - Min, y - Min);
+                const auto t = ::atan2f(x - Min, y - Min);
+                return static_cast<Field::AngleType>(std::lround(t * Radians8));
             }
         }
 
