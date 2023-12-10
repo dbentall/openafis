@@ -4,6 +4,10 @@ from pydantic import BaseModel
 
 
 class Minutia(BaseModel):
+    """Pydantic model for a minutia in ISO 19794-2:2005.
+
+    Type and angle are optional. Quality is not used in the current implementation.
+    """
     type: int = 1
     x: int
     y: int
@@ -12,14 +16,23 @@ class Minutia(BaseModel):
 
 
 class Fingerprint(BaseModel):
+    """Pydantic model for a fingerprint in ISO 19794-2:2005.
+
+    A list of minutiae. Position and quality are not used in the current implementation.
+    """
     position: int = 0
     quality: int = 0
     minutiae: list[Minutia]
 
 
 class ISOFormat(BaseModel):
-    width: int
-    height: int
+    """Pydantic model for ISO 19794-2:2005.
+
+    Typically a list with a single fingerprint. Width, height, resolution_x and
+    resolution_y are not used in the current implementation.
+    """
+    width: int = 0
+    height: int = 0
     resolution_x: int = 0
     resolution_y: int = 0
     fingerprints: list[Fingerprint]

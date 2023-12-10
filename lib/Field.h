@@ -15,6 +15,7 @@ class Field
 public:
     // Coordinates and distances are always scaled to 8-bits so uint8_t is sufficient, int is likely to be more efficient though.
     // When memory constrained specify a smaller type here, otehrwise leave default...
+    static constexpr uint8_t MinutiaCoordBits = 13;
     using MinutiaCoordSize = uint16_t;
     using MinutiaCoordType = int32_t;
 

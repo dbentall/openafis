@@ -55,10 +55,9 @@ public:
         int m_similarity {};
     };
 
-    // co-ordinates (and therefore distances) are always scaled for 8-bits...
     MinutiaPoint(const Dimensions& dimensions, const Minutia& minutia)
-        : m_x(static_cast<Field::MinutiaCoordSize>(std::lround(minutia.x() * (65536.0f / dimensions.first))))
-        , m_y(static_cast<Field::MinutiaCoordSize>(std::lround(minutia.y() * (65536.0f / dimensions.second))))
+        : m_x(static_cast<Field::MinutiaCoordSize>(std::lround(minutia.x())))
+        , m_y(static_cast<Field::MinutiaCoordSize>(std::lround(minutia.y())))
         , m_angle(FastMath::degreesToRadians(minutia.angle()))
     {
     }
@@ -72,8 +71,8 @@ public:
     [[nodiscard]] size_t bytes() const { return sizeof(*this); }
 
 private:
-    Field::MinutiaCoordSize m_x {}; // scaled for dimensions
-    Field::MinutiaCoordSize m_y {}; // "
+    Field::MinutiaCoordSize m_x {};
+    Field::MinutiaCoordSize m_y {};
     Field::AngleSize m_angle {}; // radians [0,2PI] mapped over [0,255] (uint8_t)
 };
 }

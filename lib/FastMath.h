@@ -46,19 +46,11 @@ private:
 
         [[nodiscard]] constexpr Field::MinutiaDistanceType get(const unsigned int x) const
         {
-            if (x < Max)
-            {
-                return (*m_values)[x];
-            }
-            else
-            {
-                return static_cast<Field::MinutiaDistanceType>(std::lround(std::sqrt(x)));
-            }
+            assert(x < Max);
             return (*m_values)[x];
         }
 
-        // Constrain to 8-bits to conserve BSS static memory
-        static constexpr auto Max = ((std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8) + 1) * ((std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8) + 1) * 2;
+        static constexpr auto Max = (1 << Field::MinutiaCoordBits) * (1 << Field::MinutiaCoordBits) * 2;
 
     private:
         using Values = std::array<Field::MinutiaDistanceType, Max>;
@@ -72,20 +64,14 @@ private:
 
         [[nodiscard]] constexpr Field::AngleType get(const Field::MinutiaCoordType x, const Field::MinutiaCoordType y) const
         {
-            if (x > Min && x < Max && y > Min && y < Max)
-            {
-                return (*m_values)[x - Min][y - Min];
-            }
-            else
-            {
-                const auto t = ::atan2f(x - Min, y - Min);
-                return static_cast<Field::AngleType>(std::lround(t * Radians8));
-            }
+            assert(x > Min && x < Max);
+            assert(y > Min && y < Max);
+            return (*m_values)[x - Min][y - Min];
         }
 
-        // Constrain to 8-bits to conserve BSS static memory
-        static constexpr Field::AngleType Min = -std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8;
-        static constexpr Field::AngleType Max = std::numeric_limits<Field::MinutiaCoordSize>::max() >> 8;
+        static constexpr Field::AngleType Min = -(1 << Field::MinutiaCoordBits);
+        static constexpr Field::AngleType Max = 1 << Field::MinutiaCoordBits;
+
     private:
         using Values = std::array<std::array<Field::AngleType, Max - Min>, Max - Min>;
         const Values* m_values;
