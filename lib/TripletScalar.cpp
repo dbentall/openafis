@@ -25,7 +25,7 @@ TripletScalar::TripletScalar(const Minutiae& minutiae)
 
     std::array<Field::MinutiaDistanceType, 3> d { distance(m_minutiae[0], m_minutiae[1]), distance(m_minutiae[1], m_minutiae[2]), distance(m_minutiae[2], m_minutiae[0]) };
     std::sort(d.begin(), d.end(), [](const Field::MinutiaCoordType& d1, const Field::MinutiaCoordType& d2) { return d1 > d2; });
-    m_distances = static_cast<uint32_t>(d[2]) << 16 | static_cast<uint32_t>(d[1]) << 8 | d[0];
+    m_distances = static_cast<uint64_t>(d[2]) << 32 | static_cast<uint64_t>(d[1]) << 16 | d[0];
 }
 
 
@@ -69,18 +69,18 @@ bool TripletScalar::skipPair(const TripletScalar& probe, Field::MinutiaDistanceT
 
     if constexpr (SkipMethod == 2) {
         // SWAR (ideas from https://www.chessprogramming.org/SIMD_and_SWAR_Techniques)...
-        constexpr uint32_t SignMask = 0x80808080u;
+        constexpr uint64_t SignMask = 0x8080808080808080u;
         auto d = ((m_distances | SignMask) - probe.m_distances) ^ ((m_distances ^ SignMask) & SignMask);
 
-        if (static_cast<int8_t>(d) >= max_local_distance || static_cast<int8_t>(d) <= -max_local_distance) {
+        if (static_cast<int16_t>(d) >= max_local_distance || static_cast<int16_t>(d) <= -max_local_distance) {
             return true;
         }
-        d >>= 8;
-        if (static_cast<int8_t>(d) >= max_local_distance || static_cast<int8_t>(d) <= -max_local_distance) {
+        d >>= 16;
+        if (static_cast<int16_t>(d) >= max_local_distance || static_cast<int16_t>(d) <= -max_local_distance) {
             return true;
         }
-        d >>= 8;
-        if (static_cast<int8_t>(d) >= max_local_distance || static_cast<int8_t>(d) <= -max_local_distance) {
+        d >>= 16;
+        if (static_cast<int16_t>(d) >= max_local_distance || static_cast<int16_t>(d) <= -max_local_distance) {
             return true;
         }
         return false;
@@ -165,12 +165,12 @@ void TripletScalar::emplacePair(Pair::Pairs& pairs, const TripletScalar& probe, 
 
             for (decltype(shift.size()) i = 0; i < shift.size(); ++i) {
                 // NJH-TODO const auto d = FastMath::diff(m_minutiae[i].distance(), probe.minutiae()[shift[i]].distance());
-                const auto d = FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd >> (shift[i] * 8)));
+                const auto d = FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), static_cast<Field::MinutiaDistanceType>(pd >> (shift[i] * 16)));
                 // NJH-TODO const auto d = FastMath::diff(static_cast<Field::MinutiaDistanceType>(cd), probe.minutiae()[shift[i]].distance());
                 if (d >= param.MaximumLocalDistance) {
                     return Pair::SimilarityMultiplier;
                 }
-                cd >>= 8;
+                cd >>= 16;
                 max = std::max(max, static_cast<int>(d));
             }
             return (max * Pair::SimilarityMultiplier) / param.MaximumLocalDistance;
@@ -260,8 +260,8 @@ bool TripletScalar::operator<(const TripletScalar& other) const
     }
 
     // mid...
-    cd >>= 8;
-    pd >>= 8;
+    cd >>= 16;
+    pd >>= 16;
     if (static_cast<Field::MinutiaDistanceType>(cd) < static_cast<Field::MinutiaDistanceType>(pd)) {
         return true;
     }
@@ -270,8 +270,8 @@ bool TripletScalar::operator<(const TripletScalar& other) const
     }
 
     // min...
-    cd >>= 8;
-    pd >>= 8;
+    cd >>= 16;
+    pd >>= 16;
     if (static_cast<Field::MinutiaDistanceType>(cd) < static_cast<Field::MinutiaDistanceType>(pd)) {
         return true;
     }

@@ -34,7 +34,7 @@ public:
     friend bool operator<(const Field::MinutiaDistanceType lhs, const TripletScalar& rhs) { return lhs < static_cast<Field::MinutiaDistanceType>(rhs.m_distances); } // "
 
 private:
-    uint32_t m_distances {}; // (min << 16 | mid << 8 | max) side lengths respectively (sorted minutiae distances)
+    uint64_t m_distances {}; // (min << 32 | mid << 16 | max) side lengths respectively (sorted minutiae distances)
 };
 }
 
