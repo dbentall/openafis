@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "openafis"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Daniel Bentall <daniel.bentall@plantandfood.co.nz>"]
 license = "MIT"
